@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 32, 32, 64;
+  --background-end-rgb: 16, 16, 32;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 32, 32, 64;
+    --background-end-rgb: 16, 16, 32;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  font-family: 'Press Start 2P', monospace;
+}
+
+@layer components {
+  .pixel-btn {
+    @apply px-4 py-2 bg-indigo-700 text-white border-2 border-indigo-900 
+           hover:bg-indigo-600 active:bg-indigo-800 transition-colors
+           focus:outline-none focus:ring-2 focus:ring-indigo-400;
+    image-rendering: pixelated;
+  }
+  
+  .pixel-container {
+    @apply border-4 border-gray-800 bg-gray-900 p-4 rounded-sm shadow-md;
+    image-rendering: pixelated;
+  }
+  
+  .pixel-text {
+    @apply text-sm text-white;
+    text-shadow: 2px 2px 0 #000;
+  }
+}
+
+/* Custom animation for pixelated movement */
+@keyframes pixel-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
