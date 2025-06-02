@@ -1,78 +1,182 @@
 # BlockBound - Blockchain RPG Adventure
 
-BlockBound is a web-based RPG game with blockchain integration, randomized item generation, turn-based combat, and pixel art graphics.
+A blockchain-powered RPG game where players can generate random items, engage in turn-based combat, and mint their items as NFTs on the blockchain. Built with Next.js, TypeScript, and Solidity.
 
-## Features
+## 🎮 Features
 
-- **Blockchain Authentication**: Create an account directly on the site with an automatically generated wallet
-- **Randomized Item Generation**: Generate unique RPG items with pixel art designs
-- **Turn-based Combat System**: Battle against AI opponents with combat mechanics inspired by classic RPGs
-- **Character Progression**: Gain experience and level up through combat victories
-- **Pixel Art Graphics**: Beautiful retro-style visuals throughout the application
+- **Random Item Generation**: Generate unique RPG items with pixel art, stats, and special abilities
+- **Turn-based Combat**: Battle against AI enemies using your generated items
+- **NFT Integration**: Mint your favorite items as NFTs on Ethereum and Polygon testnets
+- **MetaMask Integration**: Connect your wallet to interact with the blockchain
+- **Pixel Art Rendering**: Beautiful retro-style pixel art for all items
+- **Progressive Leveling**: Gain experience and level up through combat
 
-## Tech Stack
+## 🚀 Tech Stack
 
-- **Frontend**: Next.js, React, TypeScript, TailwindCSS
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Blockchain**: Ethereum, Polygon, Solidity, Hardhat
+- **Web3 Libraries**: Ethers.js, Wagmi, Viem
 - **State Management**: Zustand
-- **Blockchain Integration**: Ethers.js
-- **Pixel Art**: Custom pixel art generator
+- **Smart Contracts**: OpenZeppelin ERC-721
 
-## Getting Started
+## 🛠️ Setup Instructions
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- npm or yarn
+- Node.js 18+ and npm
+- MetaMask browser extension
+- **FREE testnet tokens** (no mainnet ETH required!)
 
-### Installation
+### 1. Clone and Install
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/blockbound.git
-   cd blockbound
-   ```
+```bash
+git clone <repository-url>
+cd blockbound
+npm install
+```
 
-2. Install dependencies:
-   ```bash
-   npm install
-   # or
-   yarn
-   ```
+### 2. Environment Configuration
 
-3. Run the development server:
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
+Create a `.env` file in the root directory:
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```env
+# Ethereum Network Configuration
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
 
-## How to Play
+# Private key for deployment
+PRIVATE_KEY=your_private_key_here
 
-1. **Create an Account**: Register with a username to generate your blockchain wallet
-2. **Generate Items**: Click the "Random Item" button to create unique RPG items
-3. **Battle**: Use your items to fight against enemies in turn-based combat
-4. **Level Up**: Win battles to gain experience and increase your character level
-5. **Collect Items**: Build your inventory with a variety of weapons, armor, and accessories
+# Etherscan API key for contract verification
+ETHERSCAN_API_KEY=your_etherscan_api_key_here
 
-## Project Structure
+# Next.js Configuration
+NEXT_PUBLIC_ENVIRONMENT=development
+```
 
-- `/app` - Next.js app directory with pages and components
-- `/app/components` - React components for the game interface
-- `/app/store` - State management with Zustand
-- `/app/utils` - Utility functions, including the item generator
-- `/types` - TypeScript type definitions
+### 3. Get FREE Testnet Tokens 💰
 
-## Contributing
+Get SepoliaETH from these faucets:
+- [Alchemy Faucet](https://www.alchemy.com/faucets/ethereum-sepolia) - Requires Alchemy account
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+### 4. Smart Contract Deployment
 
-## License
+Compile the smart contracts:
+```bash
+npm run compile
+```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Deploy to Sepolia testnet:
+```bash
+npm run deploy:sepolia
+```
 
-## Acknowledgments
+After deployment, update the contract address in `app/lib/web3Config.ts`:
+```typescript
+export const CONTRACT_ADDRESSES = {
+  [sepolia.id]: '0xYOUR_SEPOLIA_CONTRACT_ADDRESS',
+  [polygonAmoy.id]: '0xYOUR_AMOY_CONTRACT_ADDRESS', // Update this
+} as const;
+```
 
-- Pixel art inspiration from classic RPGs like Earthbound and Pokémon
-- Combat mechanics influenced by traditional turn-based JRPGs
+### 5. Run the Application
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🎯 How to Play
+
+1. **Connect MetaMask**: Click "Connect MetaMask" and approve the connection
+2. **Switch Network**: Switch to Sepolia testnet
+3. **Register**: Enter a username to create your game profile
+4. **Generate Items**: Click "Random Item" to generate unique RPG items
+5. **Battle**: Use "Fight!" to engage in turn-based combat with AI enemies
+6. **Mint NFTs**: Click "🎨 Mint as NFT" to mint your favorite items as blockchain NFTs
+7. **Level Up**: Gain experience through combat to increase your level
+
+## 🏗️ Smart Contract Architecture
+
+### GameItemNFT Contract
+
+The main smart contract (`contracts/GameItemNFT.sol`) is an ERC-721 NFT contract that stores:
+
+- **Item Metadata**: Name, description, rarity, type, level
+- **Item Stats**: Attack, defense, speed, health, magic, crit chance
+- **Pixel Art Data**: JSON representation of the item's pixel art
+- **Player Inventory**: Mapping of player addresses to their owned NFTs
+
+Key functions:
+- `mintItem()`: Mint a new item NFT
+- `getPlayerItems()`: Get all NFTs owned by a player
+- `getItemDetails()`: Get detailed information about an NFT
+
+## 🎨 Game Mechanics
+
+### Item Generation
+- **5 Rarity Levels**: Common, Uncommon, Rare, Epic, Legendary
+- **4 Item Types**: Weapon, Armor, Accessory, Consumable
+- **6 Core Stats**: Attack, Defense, Speed, Health, Magic, Crit Chance
+- **Procedural Pixel Art**: Unique 8x8 pixel art generated for each item
+
+### Combat System
+- **Turn-based**: Player and enemy alternate turns
+- **Stat-based Damage**: Damage calculated from attack vs defense
+- **Critical Hits**: Based on crit chance stat
+- **Special Attacks**: Unique abilities for certain items
+- **Experience Gain**: Level up through successful battles
+
+### NFT Integration
+- **On-chain Storage**: All item data stored directly on the blockchain
+- **Metadata Standard**: ERC-721 compliant metadata with OpenSea compatibility
+- **Gas Optimization**: Efficient contract design to minimize transaction costs
+- **Multi-chain Support**: Deploy on Ethereum or Polygon for different cost profiles
+
+## 🔧 Development
+
+### Project Structure
+
+```
+blockbound/
+├── app/                    # Next.js app directory
+│   ├── components/         # React components
+│   ├── lib/               # Web3 configuration
+│   ├── services/          # Web3 service layer
+│   ├── store/             # Zustand state management
+│   └── utils/             # Utility functions
+├── contracts/             # Solidity smart contracts
+├── scripts/               # Deployment scripts
+├── types/                 # TypeScript type definitions
+├── POLYGON_AMOY_SETUP.md  # Detailed testnet setup guide
+└── public/               # Static assets
+```
+
+### Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run compile` - Compile smart contracts
+- `npm run deploy:sepolia` - Deploy to Sepolia testnet
+
+### Testing
+
+The application includes comprehensive error handling and user feedback for:
+- MetaMask connection issues
+- Network switching
+- Transaction failures
+- Gas estimation errors
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly on testnet
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Note**: This is a demo application for educational purposes. Always use test networks and never share private keys or seed phrases. For production use, implement additional security measures and thorough testing.

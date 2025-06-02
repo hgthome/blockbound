@@ -1,40 +1,40 @@
 import { create } from 'zustand';
 import { User, GameItem, CombatState } from '@/types';
 import { generateRandomItem } from '@/app/utils/itemGenerator';
-import { ethers } from 'ethers';
+import { web3Service } from '@/app/services/web3Service';
 
 interface GameState {
   currentUser: User | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
   activeItem: GameItem | null;
   enemyItem: GameItem | null;
   combatState: CombatState | null;
   error: string | null;
   
-  // Authentication actions
-  register: (username: string) => Promise<void>;
-  connectWallet: () => Promise<void>;
+  // Web3 state
+  walletAddress: string | null;
+  chainId: number | null;
+  isWalletConnected: boolean;
+  isMinting: boolean;
+  lastMintedTxHash: string | null;
+  
+  // Web3 actions
+  connectWallet: (address: string, chainId: number) => Promise<void>;
   
   // Item actions
   generateRandomItem: () => void;
+  mintItemAsNFT: (item: GameItem) => Promise<void>;
   
   // Combat actions
   startCombat: () => void;
   attackEnemy: () => void;
   useSpecialAttack: () => void;
   endCombat: () => void;
+  
+  // Utility actions
+  setError: (error: string | null) => void;
+  clearError: () => void;
 }
-
-const initialUser: User = {
-  id: '',
-  username: '',
-  experience: 0,
-  level: 1,
-  wallet: '',
-  inventory: [],
-  equippedItem: undefined
-};
 
 const initialCombatState: CombatState = {
   playerHP: 100,
@@ -44,73 +44,66 @@ const initialCombatState: CombatState = {
   isOver: false
 };
 
+const createUserFromWallet = (walletAddress: string): User => {
+  // Create a display name from wallet address
+  const displayName = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+  
+  return {
+    id: walletAddress,
+    username: displayName,
+    experience: 0,
+    level: 1,
+    wallet: walletAddress,
+    inventory: [],
+    equippedItem: undefined
+  };
+};
+
 export const useGameStore = create<GameState>((set, get) => ({
   currentUser: null,
-  isAuthenticated: false,
   isLoading: false,
   activeItem: null,
   enemyItem: null,
   combatState: null,
   error: null,
-
-  // Authentication
-  register: async (username: string) => {
-    try {
-      set({ isLoading: true, error: null });
-      
-      // In a real application, this would connect to a backend
-      // For now, we'll create a local user
-      const newUserId = `user_${Date.now()}`;
-      
-      // Create a mock wallet using ethers
-      const wallet = ethers.Wallet.createRandom();
-      
-      const newUser: User = {
-        ...initialUser,
-        id: newUserId,
-        username,
-        wallet: wallet.address,
-      };
-      
-      // Wait for a second to simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      set({
-        currentUser: newUser,
-        isAuthenticated: true,
-        isLoading: false
-      });
-      
-      // Store in localStorage for persistence
-      localStorage.setItem('blockbound_user', JSON.stringify(newUser));
-      
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to register',
-        isLoading: false
-      });
-    }
-  },
   
-  connectWallet: async () => {
+  // Web3 state
+  walletAddress: null,
+  chainId: null,
+  isWalletConnected: false,
+  isMinting: false,
+  lastMintedTxHash: null,
+
+  // Web3 connection - automatically creates user
+  connectWallet: async (address: string, chainId: number) => {
     try {
       set({ isLoading: true, error: null });
       
-      // In a real app, this would connect to MetaMask or another wallet
-      // For demo purposes, we'll just simulate it
+      // Check if user data exists in localStorage
+      const storedUserKey = `blockbound_user_${address}`;
+      const storedUser = localStorage.getItem(storedUserKey);
       
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // If there's already a user, just update the wallet connection status
-      const { currentUser } = get();
-      if (currentUser) {
-        set({
-          isAuthenticated: true,
-          isLoading: false
-        });
+      let user: User;
+      if (storedUser) {
+        user = JSON.parse(storedUser);
+        // Update wallet address in case it changed
+        user.wallet = address;
       } else {
-        throw new Error('User must register first');
+        // Create new user from wallet
+        user = createUserFromWallet(address);
       }
+      
+      set({
+        walletAddress: address,
+        chainId,
+        isWalletConnected: true,
+        currentUser: user,
+        isLoading: false
+      });
+      
+      // Store user data with wallet-specific key
+      localStorage.setItem(storedUserKey, JSON.stringify(user));
+      
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Failed to connect wallet',
@@ -124,20 +117,62 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newItem = generateRandomItem();
     set({ activeItem: newItem });
     
-    // Add to user's inventory if logged in
-    const { currentUser } = get();
-    if (currentUser) {
+    // Add to user's inventory
+    const { currentUser, walletAddress } = get();
+    if (currentUser && walletAddress) {
       const updatedUser = {
         ...currentUser,
         inventory: [...currentUser.inventory, newItem]
       };
       set({ currentUser: updatedUser });
       
-      // Update localStorage
-      localStorage.setItem('blockbound_user', JSON.stringify(updatedUser));
+      // Update localStorage with wallet-specific key
+      const storedUserKey = `blockbound_user_${walletAddress}`;
+      localStorage.setItem(storedUserKey, JSON.stringify(updatedUser));
     }
   },
   
+  // NFT Minting
+  mintItemAsNFT: async (item: GameItem) => {
+    const { walletAddress, chainId } = get();
+
+    console.log('walletAddress', walletAddress);
+    console.log('chainId', chainId);
+    
+    if (!walletAddress) {
+      set({ error: 'Please connect your wallet first' });
+      return;
+    }
+    
+    if (chainId !== 11155111) { // Sepolia chain ID
+      set({ error: 'Please switch to Sepolia testnet to mint NFTs' });
+      return;
+    }
+    
+    try {
+      set({ isMinting: true, error: null });
+      
+      const txHash = await web3Service.mintItemAsNFT(item, walletAddress);
+      
+      set({ 
+        isMinting: false, 
+        lastMintedTxHash: txHash,
+        error: null 
+      });
+      
+      // Show success message
+      setTimeout(() => {
+        set({ lastMintedTxHash: null });
+      }, 10000); // Clear after 10 seconds
+      
+    } catch (error) {
+      set({
+        error: error instanceof Error ? error.message : 'Failed to mint NFT',
+        isMinting: false
+      });
+    }
+  },
+
   // Combat
   startCombat: () => {
     const { activeItem } = get();
@@ -316,5 +351,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       combatState: null,
       enemyItem: null
     });
+  },
+  
+  // Utility actions
+  setError: (error: string | null) => {
+    set({ error });
+  },
+  
+  clearError: () => {
+    set({ error: null });
   }
 })); 
