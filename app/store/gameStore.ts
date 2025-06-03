@@ -270,7 +270,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
         
         set({ currentUser: updatedUser });
-        localStorage.setItem('blockbound_user', JSON.stringify(updatedUser));
+        
+        // Use wallet-specific localStorage key
+        const { walletAddress } = get();
+        if (walletAddress) {
+          const storedUserKey = `blockbound_user_${walletAddress}`;
+          localStorage.setItem(storedUserKey, JSON.stringify(updatedUser));
+        }
       }
     }
   },
@@ -341,7 +347,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
         
         set({ currentUser: updatedUser });
-        localStorage.setItem('blockbound_user', JSON.stringify(updatedUser));
+        
+        // Use wallet-specific localStorage key
+        const { walletAddress } = get();
+        if (walletAddress) {
+          const storedUserKey = `blockbound_user_${walletAddress}`;
+          localStorage.setItem(storedUserKey, JSON.stringify(updatedUser));
+        }
       }
     }
   },
