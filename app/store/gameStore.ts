@@ -24,6 +24,7 @@ interface GameState {
   // Item actions
   generateRandomItem: () => void;
   mintItemAsNFT: (item: GameItem) => Promise<void>;
+  selectItemFromInventory: (item: GameItem) => void;
   
   // Combat actions
   startCombat: () => void;
@@ -112,29 +113,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
   },
   
-  // Item generation
+  // Item generation - temporary items, not persisted
   generateRandomItem: () => {
     const newItem = generateRandomItem();
     set({ activeItem: newItem });
-    
-    // Add to user's inventory
-    const { currentUser, walletAddress } = get();
-    if (currentUser && walletAddress) {
-      const updatedUser = {
-        ...currentUser,
-        inventory: [...currentUser.inventory, newItem]
-      };
-      set({ currentUser: updatedUser });
-      
-      // Update localStorage with wallet-specific key
-      const storedUserKey = `blockbound_user_${walletAddress}`;
-      localStorage.setItem(storedUserKey, JSON.stringify(updatedUser));
-    }
+    // Note: Random items are NOT added to inventory anymore
+    // Only minted items persist in inventory
   },
   
-  // NFT Minting
+  // Select item from inventory (minted items only)
+  selectItemFromInventory: (item: GameItem) => {
+    set({ activeItem: item });
+  },
+  
+  // NFT Minting - marks item as minted and adds to persistent inventory
   mintItemAsNFT: async (item: GameItem) => {
-    const { walletAddress, chainId } = get();
+    const { walletAddress, chainId, currentUser } = get();
 
     console.log('walletAddress', walletAddress);
     console.log('chainId', chainId);
@@ -154,11 +148,32 @@ export const useGameStore = create<GameState>((set, get) => ({
       
       const txHash = await web3Service.mintItemAsNFT(item, walletAddress);
       
-      set({ 
-        isMinting: false, 
-        lastMintedTxHash: txHash,
-        error: null 
-      });
+      // Mark item as minted and add to inventory
+      const mintedItem: GameItem = {
+        ...item,
+        minted: true,
+        txHash: txHash
+      };
+      
+      // Add minted item to user's persistent inventory
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
+          inventory: [...currentUser.inventory, mintedItem]
+        };
+        
+        set({ 
+          currentUser: updatedUser,
+          activeItem: mintedItem, // Update active item to minted version
+          isMinting: false, 
+          lastMintedTxHash: txHash,
+          error: null 
+        });
+        
+        // Persist to localStorage
+        const storedUserKey = `blockbound_user_${walletAddress}`;
+        localStorage.setItem(storedUserKey, JSON.stringify(updatedUser));
+      }
       
       // Show success message
       setTimeout(() => {
@@ -270,7 +285,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
         
         set({ currentUser: updatedUser });
-        localStorage.setItem('blockbound_user', JSON.stringify(updatedUser));
+        
+        // Use wallet-specific localStorage key
+        const { walletAddress } = get();
+        if (walletAddress) {
+          const storedUserKey = `blockbound_user_${walletAddress}`;
+          localStorage.setItem(storedUserKey, JSON.stringify(updatedUser));
+        }
       }
     }
   },
@@ -341,7 +362,13 @@ export const useGameStore = create<GameState>((set, get) => ({
         };
         
         set({ currentUser: updatedUser });
-        localStorage.setItem('blockbound_user', JSON.stringify(updatedUser));
+        
+        // Use wallet-specific localStorage key
+        const { walletAddress } = get();
+        if (walletAddress) {
+          const storedUserKey = `blockbound_user_${walletAddress}`;
+          localStorage.setItem(storedUserKey, JSON.stringify(updatedUser));
+        }
       }
     }
   },

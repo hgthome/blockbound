@@ -1,11 +1,14 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { GameItem } from '@/types';
 import ItemCard from './ItemCard';
 
 const UserProfile: React.FC = () => {
-  const { currentUser, activeItem } = useGameStore();
+  const { currentUser, activeItem, selectItemFromInventory } = useGameStore();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 3;
   
   if (!currentUser) return null;
   
@@ -14,6 +17,32 @@ const UserProfile: React.FC = () => {
   // Calculate XP progress
   const xpForNextLevel = level * 100;
   const progress = Math.min(100, (experience / xpForNextLevel) * 100);
+  
+  // Pagination calculations
+  const totalPages = Math.ceil(inventory.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = inventory.slice(startIndex, endIndex);
+  
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+  
+  const goToPrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+  const goToNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+  
+  const handleItemClick = (item: GameItem) => {
+    selectItemFromInventory(item);
+  };
   
   return (
     <div className="pixel-container p-4 mb-6">
@@ -44,22 +73,74 @@ const UserProfile: React.FC = () => {
       
       {inventory.length > 0 && (
         <div>
-          <h3 className="text-sm text-gray-300 mb-2">Inventory ({inventory.length})</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {inventory.map((item) => (
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-sm text-gray-300">
+              NFT Collection ({inventory.length} items)
+            </h3>
+            {totalPages > 1 && (
+              <div className="text-xs text-gray-400">
+                Page {currentPage} of {totalPages}
+              </div>
+            )}
+          </div>
+          
+          <div className="text-xs text-gray-400 mb-3">
+            💡 Click on any NFT to select it for battle
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+            {currentItems.map((item) => (
               <ItemCard 
                 key={item.id} 
                 item={item}
                 isActive={activeItem?.id === item.id}
+                onClick={() => handleItemClick(item)}
               />
             ))}
           </div>
+          
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2">
+              <button
+                onClick={goToPrevious}
+                disabled={currentPage === 1}
+                className="pixel-btn text-xs px-2 py-1 bg-gray-700 border-gray-900 hover:bg-gray-600 active:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ← Prev
+              </button>
+              
+              <div className="flex gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    className={`pixel-btn text-xs px-2 py-1 ${
+                      currentPage === page
+                        ? 'bg-indigo-700 border-indigo-900 text-white'
+                        : 'bg-gray-700 border-gray-900 hover:bg-gray-600 active:bg-gray-800'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              
+              <button
+                onClick={goToNext}
+                disabled={currentPage === totalPages}
+                className="pixel-btn text-xs px-2 py-1 bg-gray-700 border-gray-900 hover:bg-gray-600 active:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       )}
       
       {inventory.length === 0 && (
-        <div className="text-center py-3 text-gray-400 text-sm">
-          Your inventory is empty. Generate items to begin!
+        <div className="text-center py-6 text-gray-400 text-sm">
+          <div className="mb-2">🎨 Your NFT collection is empty</div>
+          <div>Generate items and mint them as NFTs to build your collection!</div>
         </div>
       )}
     </div>
