@@ -25,6 +25,8 @@ export type GameItem = {
   type: ItemType;
   level: number;
   pixelArt: PixelArt;
+  minted?: boolean;
+  txHash?: string;
   specialAttack?: {
     name: string;
     description: string;

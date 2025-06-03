@@ -41,7 +41,7 @@ Create a `.env` file in the root directory:
 
 ```env
 # Ethereum Network Configuration
-SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/<ALCHEMY_PROJECT>
 
 # Private key for deployment
 PRIVATE_KEY=your_private_key_here
@@ -51,6 +51,7 @@ ETHERSCAN_API_KEY=your_etherscan_api_key_here
 
 # Next.js Configuration
 NEXT_PUBLIC_ENVIRONMENT=development
+NEXT_PUBLIC_SEPOLIA_CONTRACT_ADDRESS=your_sepolia_contract
 ```
 
 ### 3. Get FREE Testnet Tokens 💰
@@ -70,13 +71,7 @@ Deploy to Sepolia testnet:
 npm run deploy:sepolia
 ```
 
-After deployment, update the contract address in `app/lib/web3Config.ts`:
-```typescript
-export const CONTRACT_ADDRESSES = {
-  [sepolia.id]: '0xYOUR_SEPOLIA_CONTRACT_ADDRESS',
-  [polygonAmoy.id]: '0xYOUR_AMOY_CONTRACT_ADDRESS', // Update this
-} as const;
-```
+After deployment, update the contract address in `.env`.
 
 ### 5. Run the Application
 
@@ -148,7 +143,6 @@ blockbound/
 ├── contracts/             # Solidity smart contracts
 ├── scripts/               # Deployment scripts
 ├── types/                 # TypeScript type definitions
-├── POLYGON_AMOY_SETUP.md  # Detailed testnet setup guide
 └── public/               # Static assets
 ```
 
@@ -158,14 +152,6 @@ blockbound/
 - `npm run build` - Build for production
 - `npm run compile` - Compile smart contracts
 - `npm run deploy:sepolia` - Deploy to Sepolia testnet
-
-### Testing
-
-The application includes comprehensive error handling and user feedback for:
-- MetaMask connection issues
-- Network switching
-- Transaction failures
-- Gas estimation errors
 
 ## 🤝 Contributing
 

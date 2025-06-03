@@ -2,12 +2,13 @@
 
 import React, { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { GameItem } from '@/types';
 import ItemCard from './ItemCard';
 
 const UserProfile: React.FC = () => {
-  const { currentUser, activeItem } = useGameStore();
+  const { currentUser, activeItem, selectItemFromInventory } = useGameStore();
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = 3;
   
   if (!currentUser) return null;
   
@@ -37,6 +38,10 @@ const UserProfile: React.FC = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
+  };
+  
+  const handleItemClick = (item: GameItem) => {
+    selectItemFromInventory(item);
   };
   
   return (
@@ -70,7 +75,7 @@ const UserProfile: React.FC = () => {
         <div>
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-sm text-gray-300">
-              Inventory ({inventory.length} items)
+              NFT Collection ({inventory.length} items)
             </h3>
             {totalPages > 1 && (
               <div className="text-xs text-gray-400">
@@ -79,12 +84,17 @@ const UserProfile: React.FC = () => {
             )}
           </div>
           
+          <div className="text-xs text-gray-400 mb-3">
+            💡 Click on any NFT to select it for battle
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
             {currentItems.map((item) => (
               <ItemCard 
                 key={item.id} 
                 item={item}
                 isActive={activeItem?.id === item.id}
+                onClick={() => handleItemClick(item)}
               />
             ))}
           </div>
@@ -128,8 +138,9 @@ const UserProfile: React.FC = () => {
       )}
       
       {inventory.length === 0 && (
-        <div className="text-center py-3 text-gray-400 text-sm">
-          Your inventory is empty. Generate items to begin!
+        <div className="text-center py-6 text-gray-400 text-sm">
+          <div className="mb-2">🎨 Your NFT collection is empty</div>
+          <div>Generate items and mint them as NFTs to build your collection!</div>
         </div>
       )}
     </div>
